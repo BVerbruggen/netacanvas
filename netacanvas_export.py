@@ -23,14 +23,30 @@ print("##### CANVAS COURSES LIST ####")
 #Define HTTP headers
 headers = { "Authorization" : "Bearer    " + canvas_token} 
 
-resp_json  = requests.get(canvas_url + "courses",headers = headers)
+#Return unpublishes courses as well
+body = { "include" : ["term"]}
+
+resp_json  = requests.get(canvas_url + "courses",headers = headers,params = body)
 
 resp = resp_json.json()
 
-course_list = [["ID","Name","SIS_COURSE_ID"]]
+course_list = [["ID","Name","Term"]]
+
 
 for course in resp:
-    course_list.append([course['id'],course['name'],course['sis_course_id']])
+    course_list.append([course['id'],course['name'],course['term']['name']])
+
+#print(resp_json.links)
+
+#while "next" in resp_json.links:
+while resp_json.links['current']['url'] != resp_json.links['last']['url']:
+    resp_json = requests.get(resp_json.links['next']['url'], headers=headers,params = body)
+    #print(resp_json.links)
+    resp = resp_json.json()
+    for course in resp:
+        course_list.append([course['id'],course['name'],course['term']['name']])
+        
+
 
 print(tabulate.tabulate(course_list, headers = "firstrow"))
 
